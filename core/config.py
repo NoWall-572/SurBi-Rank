@@ -4,7 +4,6 @@ import pickle
 
 
 class Config:
-    # --- 1. 大规模场景设置 ---
     NUM_UAV = 120
     NUM_USV = 80
     NUM_NODES = NUM_UAV + NUM_USV
@@ -14,7 +13,6 @@ class Config:
     Z_MIN_UAV = 50
     Z_MAX_UAV = 500
 
-    # --- 2. 通信模型 ---
     COMM_RANGE = 1000.0
     ALPHA = 2.1
     THETA_THRESHOLD = 0.1
@@ -27,7 +25,6 @@ class Config:
         {'pos': np.array([1500, 500, 0]), 'power': 5.0}
     ]
 
-    # --- 3. GCN ---
     R_VALUE = 0.3
     GCN_HIDDEN_DIM = 64
     GCN_LR = 0.01
@@ -35,11 +32,9 @@ class Config:
     TRAIN_GRAPH_NUM = 50
     TRAIN_GRAPH_SIZE = 50
 
-    # --- 4. 优化算法 ---
     POP_SIZE = 100
     N_GEN = 50
 
-    # 边数约束 (等式)
     TARGET_EDGE_COUNT = int(NUM_NODES * 8 / 2)
     if os.path.exists('../optimized_hyperparams.pkl'):
         try:
@@ -52,15 +47,11 @@ class Config:
     MAX_AVG_DEGREE = (TARGET_EDGE_COUNT * 2) / NUM_NODES
     MAX_EDGES = TARGET_EDGE_COUNT
 
-    # --- 5. 能量模型参数 (新增，对应 Eq. 39) ---
-    # 假设参数，需保证约束有意义（即全连通可能耗尽电量，稀疏则不会）
-    UAV_HOVER_POWER = 200.0  # W (悬停功率)
-    UAV_COMM_POWER = 2.0  # W per link (单链路通信增加的功率)
-    MISSION_TIME = 1800.0  # s (任务持续时间 30分钟)
-    # 初始电池电量 (J): 假设能支持悬停 40分钟
+    UAV_HOVER_POWER = 200.0  
+    UAV_COMM_POWER = 2.0  
+    MISSION_TIME = 1800.0 
     UAV_BATTERY_CAPACITY = (UAV_HOVER_POWER + UAV_COMM_POWER * 5) * 2400.0
 
-    # --- 6. 任务 (异构) ---
     np.random.seed(42)
     PHASE_REQS = [
         (20, 60),
