@@ -1,4 +1,3 @@
-# 文件路径: experiments/exp_part1_sim.py
 import sys, os, pickle, numpy as np, pandas as pd
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -25,7 +24,6 @@ def main():
         print(f"Simulating Strategy: {strategy}")
         import networkx as nx
         G0 = nx.from_numpy_array(G0_adj)
-        # 获取初始排名，用于决定移除顺序
         initial_order = np.argsort(get_strategy_ranking(G0, strategy))[::-1]
 
         for r in ratios:
@@ -36,10 +34,8 @@ def main():
 
             if len(alive_idx) < 2: break
 
-            # 获取当前残余拓扑
             curr_adj = G0_adj[np.ix_(alive_idx, alive_idx)]
 
-            # 【核心要求】在当前残余拓扑上，计算三个新指标
             ri, hlr, tau = compute_residual_metrics(curr_adj, strategy)
             all_results.append({'Strategy': strategy, 'Failed_Ratio': r * 100, 'RI': ri, 'HLR': hlr, 'Tau': tau})
 

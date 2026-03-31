@@ -1,5 +1,3 @@
-# 文件路径: experiments/exp8_ablation_study.py
-
 import sys
 import os
 import numpy as np
@@ -27,7 +25,6 @@ os.environ["MKL_NUM_THREADS"] = "1"
 
 
 def calculate_natural_connectivity(adj):
-    """【修复】分母必须使用当前节点数 len(adj)，严禁出现负数"""
     if len(adj) == 0: return 0.0
     evals = np.real(la.eigvals(adj))
     return np.log(np.sum(np.exp(evals)) / len(adj) + 1e-9)
@@ -64,11 +61,9 @@ def main(pool):
     G0 = nx.from_numpy_array(G0_adj)
     phi_0 = calculate_natural_connectivity(G0_adj)
 
-    # 1. 计算真实的破坏力 (Ground Truth - 深度级联与指挥节点逻辑，严格对齐 exp1)
     true_drops = np.zeros(n_nodes)
     adj_orig = nx.to_numpy_array(G0)
     
-    # 识别指挥节点 K
     degrees_init = dict(G0.degree())
     K_nodes = sorted(degrees_init, key=degrees_init.get, reverse=True)[:max(1, int(n_nodes * 0.05))]
 
@@ -76,7 +71,6 @@ def main(pool):
         active_mask = np.ones(n_nodes, dtype=bool)
         active_mask[i] = False
 
-        # 递归级联失效 (度数 <= 2 触发，与 exp1 保持一致)
         while True:
             nodes_idx = np.where(active_mask)[0]
             if len(nodes_idx) < 2: break
@@ -91,7 +85,6 @@ def main(pool):
             to_fail_global = nodes_idx[to_fail_local]
             active_mask[to_fail_global] = False
 
-        # 任务层失效 (连接到指挥节点 K)
         final_nodes = np.where(active_mask)[0]
         if len(final_nodes) == 0:
             final_nc = 0
@@ -115,13 +108,11 @@ def main(pool):
 
         true_drops[i] = max(0, phi_0 - final_nc)
 
-    # 1.5 独立计算 BI (纯粹的单步破坏力，绝不能用 true_drops.copy())
     bi = np.zeros(n_nodes)
     for i in range(n_nodes):
         adj_sub = np.delete(np.delete(adj_orig, i, 0), i, 1)
         bi[i] = max(0, phi_0 - calculate_natural_connectivity(adj_sub))
     if np.max(bi) > 1e-9: bi /= np.max(bi)
-    # 2. 计算 SI
     try:
         ks = nx.core_number(G0)
         ec = nx.eigenvector_centrality(G0, max_iter=1000)
@@ -130,14 +121,12 @@ def main(pool):
         si = np.sum(G0_adj, axis=1)
     if np.max(si) > 1e-9: si /= np.max(si)
 
-    # 3. 严格使用 GCN 模型进行预测 (绝不作弊)
     r_gcn = SurBiRanking.predict_adaptive_r(G0)
     print(f"      -> GCN Predicted Adaptive r: {r_gcn:.4f}")
 
     if abs(r_gcn - 1.0) < 1e-4:
         print("      [Note] GCN predicted r is close to 1.0, Proposed model will degrade to Only BI. This is the true output of the model.")
 
-    # 4. 寻找理论最优 r* (仅作为上限参考，不代表模型性能)
     best_r_theory = 1.0
     min_ri_theory = float('inf')
     ratios = np.arange(0, 1.01, 0.1)
@@ -163,20 +152,18 @@ def main(pool):
             min_ri_theory = ri
             best_r_theory = test_r
 
-    # 5. 定义消融实验分组 (科学严谨的分组)
     ablation_groups = {
-        f'0. Theoretical Upper Bound (r={best_r_theory:.2f})': best_r_theory,  # 理论极限
-        f'1. Proposed (GCN Output r={r_gcn:.2f})': r_gcn,  # 你的模型真实表现
-        '2. w/o SI (Only BI, Fixed r=1.0)': 1.0,  # 纯全局
-        '3. w/o BI (Only SI, Fixed r=0.0)': 0.0,  # 纯局部
-        '4. w/o GCN (Fixed r=0.3)': 0.3  # 经验常数
+        f'0. Theoretical Upper Bound (r={best_r_theory:.2f})': best_r_theory, 
+        f'1. Proposed (GCN Output r={r_gcn:.2f})': r_gcn,  
+        '2. w/o SI (Only BI, Fixed r=1.0)': 1.0,  
+        '3. w/o BI (Only SI, Fixed r=0.0)': 0.0, 
+        '4. w/o GCN (Fixed r=0.3)': 0.3 
     }
 
     print("\n[3/4] Executing 10%-step Static Attacks for all groups...")
     results = []
 
     for name, r_val in ablation_groups.items():
-        # 严格执行公式，无任何随机噪声
         scores = r_val * bi + (1 - r_val) * si
 
         tau, _ = stats.kendalltau(true_drops, scores)
@@ -197,6 +184,7 @@ def main(pool):
 
             sub_adj = G0_adj[np.ix_(alive_idx, alive_idx)]
             phi_curve.append(calculate_natural_connectivity(sub_adj) / phi_0)
+
         try:
             ri = np.trapezoid(phi_curve, ratios)
         except:

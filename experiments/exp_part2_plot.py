@@ -1,4 +1,3 @@
-# 文件路径: experiments/exp_part2_plot.py
 import pandas as pd, matplotlib.pyplot as plt, numpy as np, os
 
 
