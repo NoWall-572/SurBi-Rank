@@ -1,9 +1,3 @@
-# SurBi-Rank
-We introduce the SurBi-Ranking method, which utilizes graph convolutional networks, to dynamically evaluate and rank the criticality of nodes and edges in real time.
-
-
----
-
 ## 📖 Overview
 This project addresses the communication network resilience of large-scale heterogeneous unmanned systems (UAV/USV swarms) operating in adversarial environments. The proposed framework integrates GCN-based intelligence with multi-objective optimization to ensure mission continuity under targeted disruptions.
 
