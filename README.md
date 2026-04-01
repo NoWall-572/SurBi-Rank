@@ -1,7 +1,6 @@
 # SurBi-Rank
 We introduce the SurBi-Ranking method, which utilizes graph convolutional networks, to dynamically evaluate and rank the criticality of nodes and edges in real time.
 
-You can copy the raw Markdown code below directly into a file named `README.md` at your project root. I have ensured it uses clean syntax, professional terminology, and clear navigation links to your sub-folder documentation.
 
 ---
 
